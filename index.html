@@ -41,21 +41,21 @@
         const psdFile = Psd.parse(result);
 
         const compositeBuffer = await psdFile.composite();
-        console.log(compositeBuffer);
+        // console.log(compositeBuffer);
         // console.log(psdFile);
-        // function gcd(a, b) {
-        //   let r;
-        //   while (b != 0) {
-        //     r = a % b;
-        //     a = b;
-        //     b = r;
-        //   }
-        //   return a;
-        // }
-        // const ratio = {
-        //   x: psdFile.width / gcd(psdFile.width, psdFile.height),
-        //   y: psdFile.height / gcd(psdFile.width, psdFile.height),
-        // };
+        function gcd(a, b) {
+          let r;
+          while (b != 0) {
+            r = a % b;
+            a = b;
+            b = r;
+          }
+          return a;
+        }
+        const ratio = {
+          x: psdFile.width / gcd(psdFile.width, psdFile.height),
+          y: psdFile.height / gcd(psdFile.width, psdFile.height),
+        };
         // const canvasElement = document.createElement("canvas");
         // const context = canvasElement.getContext("2d");
         // const compositeBuffer = await psdFile.composite();
@@ -69,14 +69,15 @@
         // canvasElement.height = psdFile.height;
 
         // showPsd.append(canvasElement);
-        console.log(psdFile.width);
+        console.log(psdFile.width, psdFile.height, ratio.x, ratio.y);
+        let arr = [];
         for (const layer of psdFile.layers) {
           const pixelData = await layer.composite();
           console.log(layer);
-          console.log(
-            `이름 : ${layer.layerFrame.layerProperties.name}, 가로 : ${layer.layerFrame.width}, 세로 : ${layer.layerFrame.height}, top : ${layer.layerFrame.layerProperties.top}, left : ${layer.layerFrame.layerProperties.left}`
-          );
-          console.log(pixelData);
+          // console.log(
+          //   `이름 : ${layer.layerFrame.layerProperties.name}, 가로 : ${layer.layerFrame.width}, 세로 : ${layer.layerFrame.height}, top : ${layer.layerFrame.layerProperties.top}, left : ${layer.layerFrame.layerProperties.left}`
+          // );
+          // console.log(pixelData);
           const canvasElement = document.createElement("canvas");
           const context = canvasElement.getContext("2d");
           const imageDatas = new ImageData(
@@ -92,7 +93,73 @@
           showPsd.append(layerInfo);
           showPsd.append(canvasElement);
           showPsd.append(document.createElement("br"));
+          arr.push(layer.layerFrame.layerProperties.name);
         }
+        console.log(
+          arr.length,
+          arr.length === document.getElementsByTagName("canvas").length
+        );
+        for (let i = 0; i < arr.length; i++) {
+          await html2canvas(document.getElementsByTagName("canvas")[i]).then(
+            function (canvas) {
+              const hiddenCapture = document.querySelector(".hiddenCapture");
+              hiddenCapture.href = canvas.toDataURL();
+              hiddenCapture.download = `${arr[i]}.jpg`;
+              hiddenCapture.click();
+            }
+          );
+        }
+        // for (let i = 30; i < arr.length; i++) {
+        //   html2canvas(document.getElementsByTagName("canvas")[i]).then(
+        //     function (canvas) {
+        //       const hiddenCapture = document.querySelector(".hiddenCapture");
+        //       hiddenCapture.href = canvas.toDataURL("image/jpeg");
+        //       hiddenCapture.download = `${arr[i]}`;
+        //       hiddenCapture.click();
+        //     }
+        //   );
+        // }
+
+        // html2canvas(document.getElementsByTagName("canvas")[0]).then(function (
+        //   canvas
+        // ) {
+        //   const hiddenCapture = document.querySelector(".hiddenCapture");
+        //   hiddenCapture.href = canvas.toDataURL("image/jpg");
+        //   hiddenCapture.download = `${arr[0]}`;
+        //   hiddenCapture.click();
+        // });
+        // html2canvas(document.getElementsByTagName("canvas")[1]).then(function (
+        //   canvas
+        // ) {
+        //   const hiddenCapture = document.querySelector(".hiddenCapture");
+        //   hiddenCapture.href = canvas.toDataURL("image/jpeg");
+        //   hiddenCapture.download = `${arr[1]}`;
+        //   hiddenCapture.click();
+        // });
+        // html2canvas(document.getElementsByTagName("canvas")[3]).then(function (
+        //   canvas
+        // ) {
+        //   const hiddenCapture = document.querySelector(".hiddenCapture");
+        //   hiddenCapture.href = canvas.toDataURL("image/jpeg");
+        //   hiddenCapture.download = `${arr[3]}`;
+        //   hiddenCapture.click();
+        // });
+        // html2canvas(document.getElementsByTagName("canvas")[9]).then(function (
+        //   canvas
+        // ) {
+        //   const hiddenCapture = document.querySelector(".hiddenCapture");
+        //   hiddenCapture.href = canvas.toDataURL("image/jpeg");
+        //   hiddenCapture.download = `${arr[9]}`;
+        //   hiddenCapture.click();
+        // });
+        // html2canvas(document.getElementsByTagName("canvas")[20]).then(function (
+        //   canvas
+        // ) {
+        //   const hiddenCapture = document.querySelector(".hiddenCapture");
+        //   hiddenCapture.href = canvas.toDataURL("image/jpeg");
+        //   hiddenCapture.download = `${arr[20]}`;
+        //   hiddenCapture.click();
+        // });
 
         // html2canvas(showPsd.children[1]).then(function (canvas) {
         //   showPsd.removeChild(showPsd.children[1]);
