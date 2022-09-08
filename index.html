@@ -99,16 +99,16 @@
           arr.length,
           arr.length === document.getElementsByTagName("canvas").length
         );
-        for (let i = 0; i < arr.length; i++) {
-          await html2canvas(document.getElementsByTagName("canvas")[i]).then(
-            function (canvas) {
-              const hiddenCapture = document.querySelector(".hiddenCapture");
-              hiddenCapture.href = canvas.toDataURL();
-              hiddenCapture.download = `${arr[i]}.jpg`;
-              hiddenCapture.click();
-            }
-          );
-        }
+        // for (let i = 0; i < arr.length; i++) {
+        //   await html2canvas(document.getElementsByTagName("canvas")[i]).then(
+        //     function (canvas) {
+        //       const hiddenCapture = document.querySelector(".hiddenCapture");
+        //       hiddenCapture.href = canvas.toDataURL();
+        //       hiddenCapture.download = `${arr[i]}.jpg`;
+        //       hiddenCapture.click();
+        //     }
+        //   );
+        // }
       });
 
       // const saveImg = document.querySelector(".saveImg");
