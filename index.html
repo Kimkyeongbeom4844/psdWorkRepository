@@ -10,7 +10,7 @@
     <div class="wrap">
       <div>웹툰번역</div>
       <input type="file" name="업로드" id="" accept=".psd" />
-      <button class="saveImg">저장</button>
+      <!-- <button class="saveImg">저장</button> -->
       <div class="showImg"></div>
       <a class="hiddenCapture"></a>
     </div>
@@ -71,9 +71,13 @@
         // showPsd.append(canvasElement);
         console.log(psdFile.width, psdFile.height, ratio.x, ratio.y);
         let arr = [];
+        let count = 0;
         for (const layer of psdFile.layers) {
-          const pixelData = await layer.composite();
-          console.log(layer);
+          const pixelData = await layer.composite(true, false);
+          console.log(
+            layer.layerFrame.layerProperties.name,
+            layer.parent.layerFrame.layerProperties.name
+          );
           // console.log(
           //   `이름 : ${layer.layerFrame.layerProperties.name}, 가로 : ${layer.layerFrame.width}, 세로 : ${layer.layerFrame.height}, top : ${layer.layerFrame.layerProperties.top}, left : ${layer.layerFrame.layerProperties.left}`
           // );
@@ -88,27 +92,45 @@
           canvasElement.width = layer.layerFrame.width;
           canvasElement.height = layer.layerFrame.height;
           context.putImageData(imageDatas, 0, 0);
-          const layerInfo = document.createElement("h4");
-          layerInfo.innerText = `이름 : ${layer.layerFrame.layerProperties.name}, 가로 : ${layer.layerFrame.width}, 세로 : ${layer.layerFrame.height}, top : ${layer.layerFrame.layerProperties.top}, left : ${layer.layerFrame.layerProperties.left}`;
+          const layerInfo = document.createElement("p");
+          layerInfo.innerHTML = `
+          이름 : ${layer.layerFrame.layerProperties.name}, 가로 : ${layer.layerFrame.width}, 세로 : ${layer.layerFrame.height}, top : ${layer.layerFrame.layerProperties.top}, left : ${layer.layerFrame.layerProperties.left}
+          <button class="capture">캡쳐</button>
+          `;
           showPsd.append(layerInfo);
           showPsd.append(canvasElement);
           showPsd.append(document.createElement("br"));
           arr.push(layer.layerFrame.layerProperties.name);
         }
-        console.log(
-          arr.length,
-          arr.length === document.getElementsByTagName("canvas").length
-        );
+        // console.log(
+        //   arr.length,
+        //   arr.length === document.getElementsByTagName("canvas").length
+        // );
         // for (let i = 0; i < arr.length; i++) {
-        //   await html2canvas(document.getElementsByTagName("canvas")[i]).then(
-        //     function (canvas) {
-        //       const hiddenCapture = document.querySelector(".hiddenCapture");
-        //       hiddenCapture.href = canvas.toDataURL();
-        //       hiddenCapture.download = `${arr[i]}.jpg`;
-        //       hiddenCapture.click();
-        //     }
-        //   );
+        // await html2canvas(document.getElementsByTagName("canvas")[i]).then(
+        //   function (canvas) {
+        //     const hiddenCapture = document.querySelector(".hiddenCapture");
+        //     hiddenCapture.href = canvas.toDataURL();
+        //     hiddenCapture.download = `${arr[i]}.jpg`;
+        //     hiddenCapture.click();
+        //   }
+        // );
         // }
+        for (let i = 0; i < document.querySelectorAll(".capture").length; i++) {
+          document
+            .querySelectorAll(".capture")
+            [i].addEventListener("click", async (e) => {
+              e.preventDefault();
+              await html2canvas(
+                document.getElementsByTagName("canvas")[i]
+              ).then(function (canvas) {
+                const hiddenCapture = document.querySelector(".hiddenCapture");
+                hiddenCapture.href = canvas.toDataURL();
+                hiddenCapture.download = `${arr[i]}.jpg`;
+                hiddenCapture.click();
+              });
+            });
+        }
       });
 
       // const saveImg = document.querySelector(".saveImg");
