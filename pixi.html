@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>픽시연습</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
+      crossorigin="anonymous"
+    />
+  </head>
+  <body>
+    <button class="takeScreenshot">캡쳐</button>
+    <button class="editImage">브러시</button>
+    <input
+      type="color"
+      class="form-control form-control-color"
+      id="exampleColorInput"
+      value="#000000"
+      title="Choose your color"
+    />
+    <button class="allClear">초기화</button>
+    <button class="bubble-top">up</button>
+    <button class="bubble-bottom">down</button>
+    <button class="bubble-left">left</button>
+    <button class="bubble-right">right</button>
+
+    <div class="pixiWrap"></div>
+    <script src="https://pixijs.download/release/pixi.js"></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+      crossorigin="anonymous"
+    ></script>
+    <script>
+      window.oncontextmenu = function () {
+        return false;
+      };
+      const init = async () => {
+        console.log();
+        const app = new PIXI.Application({
+          width: 500,
+          height: 5000,
+          resolution: devicePixelRatio,
+        });
+        document.querySelector(".pixiWrap").appendChild(app.view);
+        const { stage } = app;
+
+        let wait = false;
+        let waiting = false;
+
+        const takeScreenshot = () => {
+          wait = true;
+          console.log(app.stage.children);
+          let arr = [];
+          for (let i of app.stage.children) {
+            if (!(i._text === undefined && i.isSprite)) {
+              arr.push(i);
+            }
+          }
+          for (let i of arr) {
+            app.stage.removeChild(i);
+          }
+          app.renderer.extract.canvas(stage).toBlob((b) => {
+            const a = document.createElement("a");
+            document.body.append(a);
+            a.download = "여기에 이름대입";
+            a.href = URL.createObjectURL(b);
+            a.click();
+            a.remove();
+          }, "image/jpeg");
+          for (let i of arr) {
+            app.stage.addChild(i);
+          }
+        };
+        document
+          .querySelector(".takeScreenshot")
+          .addEventListener("click", takeScreenshot);
+
+        const brush = new PIXI.Graphics();
+        brush.beginFill(0x000000);
+        brush.drawCircle(0, 0, 5);
+        brush.endFill();
+
+        // 브러시 색상 변경 기능 시작
+        const brushColor = document.querySelector("#exampleColorInput");
+        brushColor.addEventListener("click", (e) => {
+          app.stage.off("pointerdown", pointerDown);
+        });
+        brushColor.addEventListener("change", (e) => {
+          const color = e.target.value.trim().slice(1);
+          brush.beginFill(`0x${e.target.value.trim().slice(1)}`);
+          brush.drawCircle(0, 0, 5);
+          brush.endFill();
+          app.stage.on("pointerdown", pointerDown);
+        });
+        // 브러시 색상 변경 기능 끝
+
+        // app.loader.add("t1", "003_001_1.jpg");
+        const whatImage = PIXI.Texture.from("003_001_1.jpg");
+        // app.loader.add("t2", "날개 선화.jpg");
+        // const texture = PIXI.Texture.from("날개 선화.jpg");
+
+        const background = new PIXI.Sprite(whatImage);
+        stage.addChild(background);
+        background.width = app.screen.width;
+        background.height = app.screen.height;
+
+        // const imageToReveal = new PIXI.Sprite(texture);
+        // stage.addChild(imageToReveal);
+        // imageToReveal.width = app.screen.width;
+        // imageToReveal.height = app.screen.height;
+
+        let renderTexture = PIXI.RenderTexture.create(
+          app.screen.width,
+          app.screen.height
+        );
+
+        const renderTextureSprite = new PIXI.Sprite(renderTexture);
+        stage.addChild(renderTextureSprite);
+        // imageToReveal.mask = renderTextureSprite;
+
+        app.stage.interactive = true;
+
+        // 브러시 기능 시작
+        let onOff = false;
+        document.querySelector(".editImage").addEventListener("click", () => {
+          onOff = !onOff;
+          console.log(onOff);
+          if (onOff) {
+            app.stage.on("pointerdown", pointerDown);
+            app.stage.on("pointerup", pointerUp);
+            app.stage.on("pointermove", pointerMove);
+            document.querySelector(".editImage").innerText = "브러시 킴";
+            for (let i of app.stage.children) {
+              i.interactive = false;
+            }
+          } else {
+            app.stage.off("pointerdown", pointerDown);
+            app.stage.off("pointerup", pointerUp);
+            app.stage.off("pointermove", pointerMove);
+            document.querySelector(".editImage").innerText = "브러시 끔";
+            for (let i of app.stage.children) {
+              i.interactive = true;
+            }
+          }
+          const brushOff = () => {
+            app.stage.off("pointerdown", pointerDown);
+            app.stage.off("pointerup", pointerUp);
+            app.stage.off("pointermove", pointerMove);
+            for (let i of app.stage.children) {
+              i.interactive = true;
+            }
+            document.querySelector(".editImage").innerText = "브러시 끔";
+            onOff = false;
+          };
+          document
+            .querySelector(".bubble-top")
+            .addEventListener("click", brushOff);
+          document
+            .querySelector(".bubble-bottom")
+            .addEventListener("click", brushOff);
+          document
+            .querySelector(".bubble-left")
+            .addEventListener("click", brushOff);
+          document
+            .querySelector(".bubble-right")
+            .addEventListener("click", brushOff);
+        });
+        let dragging = false;
+        function pointerMove(event) {
+          if (dragging) {
+            brush.position.copyFrom(event.data.global);
+            // console.log(event.data.global);
+            app.renderer.render(brush, renderTexture, false, null, false);
+          }
+        }
+
+        function pointerDown(event) {
+          dragging = true;
+          pointerMove(event);
+        }
+
+        function pointerUp(event) {
+          dragging = false;
+        }
+        //브러시 기능 끝
+
+        //말 풍선 시작
+        const addSticker = async (e) => {
+          const direction = e.currentTarget.className;
+          const basicText = new PIXI.Text(
+            "이거 좀 수정해주세요\n이스케이프(\\n)문으로 탈출\nhello world",
+            new PIXI.TextStyle({ fontSize: 14 })
+          );
+          const graphics = new PIXI.Graphics();
+          basicText.x = Math.random() * 100;
+          basicText.y = Math.random() * 100;
+          const transX = basicText.x;
+          const transY = basicText.y;
+          onOff
+            ? (basicText.interactive = false)
+            : (basicText.interactive = true);
+
+          basicText.buttonMode = true;
+          await app.stage.addChild(basicText);
+          await basicText.calculateVertices();
+
+          const sticker = setInterval(() => {
+            let arr = [...basicText.vertexData];
+            let tri = [];
+            let tri1, tri2, tri3;
+            switch (direction) {
+              case "bubble-top":
+                tri1 =
+                  (basicText.vertexData[0] + basicText.vertexData[2]) / 2 - 10;
+                tri2 =
+                  (basicText.vertexData[0] + basicText.vertexData[2]) / 2 + 10;
+                tri3 = (basicText.vertexData[0] + basicText.vertexData[2]) / 2;
+                tri = [
+                  tri1,
+                  basicText.vertexData[1],
+                  tri3,
+                  basicText.vertexData[1] - 15,
+                  tri2,
+                  basicText.vertexData[1],
+                ];
+                arr.splice(2, 0, ...tri);
+                break;
+              case "bubble-bottom":
+                tri1 =
+                  (basicText.vertexData[0] + basicText.vertexData[2]) / 2 - 10;
+                tri2 =
+                  (basicText.vertexData[0] + basicText.vertexData[2]) / 2 + 10;
+                tri3 = (basicText.vertexData[0] + basicText.vertexData[2]) / 2;
+                tri = [
+                  tri2,
+                  basicText.vertexData[5],
+                  tri3,
+                  basicText.vertexData[5] + 15,
+                  tri1,
+                  basicText.vertexData[5],
+                ];
+                arr.splice(6, 0, ...tri);
+                break;
+              case "bubble-left":
+                tri1 =
+                  (basicText.vertexData[3] + basicText.vertexData[5]) / 2 - 10;
+                tri2 =
+                  (basicText.vertexData[3] + basicText.vertexData[5]) / 2 + 10;
+                tri3 = (basicText.vertexData[3] + basicText.vertexData[5]) / 2;
+                tri = [
+                  basicText.vertexData[0],
+                  tri2,
+                  basicText.vertexData[0] - 15,
+                  tri3,
+                  basicText.vertexData[0],
+                  tri1,
+                ];
+                arr.splice(8, 0, ...tri);
+                break;
+              case "bubble-right":
+                tri1 =
+                  (basicText.vertexData[3] + basicText.vertexData[5]) / 2 - 10;
+                tri2 =
+                  (basicText.vertexData[3] + basicText.vertexData[5]) / 2 + 10;
+                tri3 = (basicText.vertexData[3] + basicText.vertexData[5]) / 2;
+                tri = [
+                  basicText.vertexData[2],
+                  tri1,
+                  basicText.vertexData[2] + 15,
+                  tri3,
+                  basicText.vertexData[2],
+                  tri2,
+                ];
+                arr.splice(4, 0, ...tri);
+                break;
+              default:
+                console.err(`there is nothing name ${direction}`);
+            }
+            graphics.lineStyle(4.0, 0x000000);
+            graphics.beginFill(0xffffff);
+            graphics.drawPolygon(arr);
+            app.stage.addChild(graphics);
+            app.stage.addChild(basicText);
+            clearInterval(sticker);
+          }, 50);
+
+          let firstX, firstY, pick, pickX, pickY;
+          let dragOn = false;
+          const onDragStart = (e) => {
+            dragOn = true;
+            pick = e.target;
+            pickX = e.target.x;
+            pickY = e.target.y;
+            firstX = e.data.originalEvent.pageX;
+            firstY = e.data.originalEvent.pageY;
+            // app.stage.scale.x === 1
+            //   ? (app.stage.scale.x = 2)
+            //   : (app.stage.scale.x = 1);
+            console.log(app.stage.children);
+          };
+
+          const onDragMove = (e) => {
+            if (dragOn) {
+              if (e.data.originalEvent.target.tagName === `CANVAS`) {
+                pick.x = pickX + (e.data.originalEvent.pageX - firstX);
+                pick.y = pickY + (e.data.originalEvent.pageY - firstY);
+                graphics.x = pick.x - transX;
+                graphics.y = pick.y - transY;
+              }
+            }
+          };
+
+          const onDragEnd = () => {
+            dragOn = false;
+          };
+
+          const removeBox = (e) => {
+            app.stage.removeChild(graphics);
+            app.stage.removeChild(e.target);
+          };
+
+          basicText
+            .on("pointerdown", onDragStart)
+            .on("pointerup", onDragEnd)
+            .on("pointerupoutside", onDragEnd)
+            .on("pointermove", onDragMove)
+            .on("rightclick", removeBox);
+        };
+        //말 풍선 끝
+
+        document
+          .querySelector(".bubble-top")
+          .addEventListener("click", addSticker);
+        document
+          .querySelector(".bubble-bottom")
+          .addEventListener("click", addSticker);
+        document
+          .querySelector(".bubble-left")
+          .addEventListener("click", addSticker);
+        document
+          .querySelector(".bubble-right")
+          .addEventListener("click", addSticker);
+
+        //리셋 기능 시작
+        document.querySelector(".allClear").addEventListener("click", () => {
+          app.stage.children.splice(1, 1);
+          renderTexture = PIXI.RenderTexture.create(
+            app.screen.width,
+            app.screen.height
+          );
+
+          const renderTextureSprite = new PIXI.Sprite(renderTexture);
+          app.stage.addChildAt(renderTextureSprite, 1);
+        });
+        //리셋 기능 끝
+
+        // const slider = app.stage.addChild(
+        //   new PIXI.Graphics()
+        //     .beginFill(0x38404e, 0.87)
+        //     .drawRect(0, 10, 5, 250)
+        //     .endFill()
+        // );
+        // slider.position.set(10, 0);
+        // const handle = slider.addChild(
+        //   new PIXI.Graphics()
+        //     .beginFill(0x000000)
+        //     .drawCircle(-7, 0, 10)
+        //     .endFill()
+        // );
+        // handle.interactive = true;
+        // handle.position.set(10, 125);
+        // slider.interactive = true;
+      };
+      init();
+    </script>
+  </body>
+</html>

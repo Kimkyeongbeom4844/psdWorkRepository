@@ -38,8 +38,8 @@
       inputEl.addEventListener("change", async () => {
         const file = inputEl.files[0];
         const result = await file.arrayBuffer();
-        const psdFile = Psd.parse(result);
-
+        const psdFile = await Psd.parse(result);
+        console.log(psdFile);
         const compositeBuffer = await psdFile.composite();
         // console.log(compositeBuffer);
         // console.log(psdFile);
