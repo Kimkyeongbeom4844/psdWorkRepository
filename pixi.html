@@ -29,10 +29,55 @@
     <button class="bubble-right">right</button>
 
     <div class="pixiWrap"></div>
+
+    <div
+      class="modal fade"
+      id="staticBackdrop"
+      data-bs-backdrop="static"
+      data-bs-keyboard="false"
+      tabindex="-1"
+      aria-labelledby="staticBackdropLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="staticBackdropLabel">테스트</h5>
+            <button
+              type="button"
+              class="btn-close cancelText"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary cancelText"
+              data-bs-dismiss="modal"
+            >
+              Close
+            </button>
+            <button type="button" class="btn btn-primary editText">
+              이름변경
+            </button>
+            <button type="button" class="btn btn-danger removeText">
+              삭제
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
     <script src="https://pixijs.download/release/pixi.js"></script>
     <script
       src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
       integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://code.jquery.com/jquery-3.6.1.js"
+      integrity="sha256-3zlB5s2uwoUzrXK3BT7AX3FyvojsraNFxCc2vC/7pNI="
       crossorigin="anonymous"
     ></script>
     <script>
@@ -95,7 +140,7 @@
           brush.beginFill(`0x${e.target.value.trim().slice(1)}`);
           brush.drawCircle(0, 0, 5);
           brush.endFill();
-          app.stage.on("pointerdown", pointerDown);
+          onOff === true && app.stage.on("pointerdown", pointerDown);
         });
         // 브러시 색상 변경 기능 끝
 
@@ -129,7 +174,6 @@
         let onOff = false;
         document.querySelector(".editImage").addEventListener("click", () => {
           onOff = !onOff;
-          console.log(onOff);
           if (onOff) {
             app.stage.on("pointerdown", pointerDown);
             app.stage.on("pointerup", pointerUp);
@@ -199,8 +243,8 @@
           const graphics = new PIXI.Graphics();
           basicText.x = Math.random() * 100;
           basicText.y = Math.random() * 100;
-          const transX = basicText.x;
-          const transY = basicText.y;
+          let transX = basicText.x;
+          let transY = basicText.y;
           onOff
             ? (basicText.interactive = false)
             : (basicText.interactive = true);
@@ -301,7 +345,6 @@
             // app.stage.scale.x === 1
             //   ? (app.stage.scale.x = 2)
             //   : (app.stage.scale.x = 1);
-            console.log(app.stage.children);
           };
 
           const onDragMove = (e) => {
@@ -309,8 +352,10 @@
               if (e.data.originalEvent.target.tagName === `CANVAS`) {
                 pick.x = pickX + (e.data.originalEvent.pageX - firstX);
                 pick.y = pickY + (e.data.originalEvent.pageY - firstY);
-                graphics.x = pick.x - transX;
-                graphics.y = pick.y - transY;
+                app.stage.children[app.stage.getChildIndex(pick) - 1].x =
+                  pick.x - transX;
+                app.stage.children[app.stage.getChildIndex(pick) - 1].y =
+                  pick.y - transY;
               }
             }
           };
@@ -320,8 +365,134 @@
           };
 
           const removeBox = (e) => {
-            app.stage.removeChild(graphics);
-            app.stage.removeChild(e.target);
+            $("#staticBackdrop").modal("show");
+            const chooseText = e.target;
+            const chooseGraphics =
+              app.stage.children[app.stage.getChildIndex(pick) - 1];
+            $(".removeText").on("click", () => {
+              app.stage.removeChild(chooseGraphics);
+              app.stage.removeChild(chooseText);
+              $("#staticBackdrop").modal("hide");
+              $(".removeText").off("click");
+              $(".editText").off("click");
+            });
+            $(".editText").on("click", async () => {
+              await app.stage.removeChild(chooseGraphics);
+              chooseText.text = "추후 글자 바뀌는 값은 inputValue로";
+              transX = chooseText.x;
+              transY = chooseText.y;
+              const newVertex = await chooseText.calculateVertices();
+              console.log(app.stage.getChildIndex(chooseText));
+              const newGraphics = new PIXI.Graphics();
+              const sticker = setInterval(() => {
+                let arr = [...chooseText.vertexData];
+                let tri = [];
+                let tri1, tri2, tri3;
+                switch (direction) {
+                  case "bubble-top":
+                    tri1 =
+                      (chooseText.vertexData[0] + chooseText.vertexData[2]) /
+                        2 -
+                      10;
+                    tri2 =
+                      (chooseText.vertexData[0] + chooseText.vertexData[2]) /
+                        2 +
+                      10;
+                    tri3 =
+                      (chooseText.vertexData[0] + chooseText.vertexData[2]) / 2;
+                    tri = [
+                      tri1,
+                      chooseText.vertexData[1],
+                      tri3,
+                      chooseText.vertexData[1] - 15,
+                      tri2,
+                      chooseText.vertexData[1],
+                    ];
+                    arr.splice(2, 0, ...tri);
+                    break;
+                  case "bubble-bottom":
+                    tri1 =
+                      (chooseText.vertexData[0] + chooseText.vertexData[2]) /
+                        2 -
+                      10;
+                    tri2 =
+                      (chooseText.vertexData[0] + chooseText.vertexData[2]) /
+                        2 +
+                      10;
+                    tri3 =
+                      (chooseText.vertexData[0] + chooseText.vertexData[2]) / 2;
+                    tri = [
+                      tri2,
+                      chooseText.vertexData[5],
+                      tri3,
+                      chooseText.vertexData[5] + 15,
+                      tri1,
+                      chooseText.vertexData[5],
+                    ];
+                    arr.splice(6, 0, ...tri);
+                    break;
+                  case "bubble-left":
+                    tri1 =
+                      (chooseText.vertexData[3] + chooseText.vertexData[5]) /
+                        2 -
+                      10;
+                    tri2 =
+                      (chooseText.vertexData[3] + chooseText.vertexData[5]) /
+                        2 +
+                      10;
+                    tri3 =
+                      (chooseText.vertexData[3] + chooseText.vertexData[5]) / 2;
+                    tri = [
+                      chooseText.vertexData[0],
+                      tri2,
+                      chooseText.vertexData[0] - 15,
+                      tri3,
+                      chooseText.vertexData[0],
+                      tri1,
+                    ];
+                    arr.splice(8, 0, ...tri);
+                    break;
+                  case "bubble-right":
+                    tri1 =
+                      (chooseText.vertexData[3] + chooseText.vertexData[5]) /
+                        2 -
+                      10;
+                    tri2 =
+                      (chooseText.vertexData[3] + chooseText.vertexData[5]) /
+                        2 +
+                      10;
+                    tri3 =
+                      (chooseText.vertexData[3] + chooseText.vertexData[5]) / 2;
+                    tri = [
+                      chooseText.vertexData[2],
+                      tri1,
+                      chooseText.vertexData[2] + 15,
+                      tri3,
+                      chooseText.vertexData[2],
+                      tri2,
+                    ];
+                    arr.splice(4, 0, ...tri);
+                    break;
+                  default:
+                    console.err(`there is nothing name ${direction}`);
+                }
+                newGraphics.lineStyle(4.0, 0x000000);
+                newGraphics.beginFill(0xffffff);
+                newGraphics.drawPolygon(arr);
+                app.stage.addChildAt(
+                  newGraphics,
+                  app.stage.getChildIndex(chooseText)
+                );
+                clearInterval(sticker);
+              }, 50);
+              $("#staticBackdrop").modal("hide");
+              $(".removeText").off("click");
+              $(".editText").off("click");
+            });
+            $(".cancelText").on("click", () => {
+              $(".removeText").off("click");
+              $(".editText").off("click");
+            });
           };
 
           basicText
