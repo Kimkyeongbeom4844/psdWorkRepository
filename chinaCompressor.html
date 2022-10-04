@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <input type="file" id="file" accept="image/*" />
+    <script src="./node_modules/js-image-compressor//dist/image-compressor.js"></script>
+    <script>
+      document.getElementById("file").addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file) {
+          return;
+        }
+        console.log(file);
+        let options = {
+          file: file,
+          quality: 0.6,
+          mimeType: "image/jpeg",
+          // maxWidth: 2000,
+          // maxHeight: 2000,
+          // width: 1000,
+          // height: 1000,
+          // minWidth: 500,
+          // minHeight: 500,
+          convertSize: Infinity,
+          loose: true,
+          redressOrientation: true,
+
+          // Callback before compression
+          beforeCompress: function (result) {
+            console.log("Image size before compression:", result.size);
+            console.log("mime type:", result.type);
+          },
+
+          // Compression success callback
+          success: function (result) {
+            console.log(result);
+            console.log("Image size after compression:", result.size);
+            console.log("mime type:", result.type);
+            console.log(
+              "Actual compression ratio:",
+              (((file.size - result.size) / file.size) * 100).toFixed(2) + "%"
+            );
+          },
+
+          // An error occurred
+          error: function (msg) {
+            console.error(msg);
+          },
+        };
+
+        new ImageCompressor(options);
+      });
+    </script>
+  </body>
+</html>

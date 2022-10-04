@@ -35,51 +35,90 @@
       var layer = new Konva.Layer();
       stage.add(layer);
 
-      var isPaint = false;
-      var mode = "brush";
-      var lastLine;
+      // then we are going to draw into special canvas element
+      var canvas = document.createElement("canvas");
+      canvas.width = stage.width();
+      canvas.height = stage.height();
 
-      stage.on("mousedown touchstart", function (e) {
-        isPaint = true;
-        var pos = stage.getPointerPosition();
-        lastLine = new Konva.Line({
-          stroke: "black",
-          strokeWidth: 10,
-          globalCompositeOperation:
-            mode === "brush" ? "source-over" : "destination-out",
-          // round cap for smoother lines
-          lineCap: "round",
-          lineJoin: "round",
-          // add point twice, so we have some drawings even on a simple click
-          points: [pos.x, pos.y, pos.x, pos.y],
-        });
-        layer.add(lastLine);
-        console.log(isPaint);
+      const isImg = new Image();
+      isImg.src = "http://192.168.1.2:8000/files/file/003_002.jpg";
+
+      loadImg = new Konva.Image({
+        image: isImg,
+        width: stage.width(),
+        height: stage.height(),
       });
+      layer.add(loadImg);
+
+      // created canvas we can add to layer as "Konva.Image" element
+      var image = new Konva.Image({
+        image: canvas,
+        width: loadImg.width(),
+        height: loadImg.height(),
+      });
+      layer.add(image);
+
+      // Good. Now we need to get access to context element
+      var context = canvas.getContext("2d");
+      context.strokeStyle = "#df4b26";
+      context.lineJoin = "round";
+      context.lineWidth = 5;
+
+      var isPaint = false;
+      var lastPointerPosition;
+      var mode = "brush";
+
+      // now we need to bind some events
+      // we need to start drawing on mousedown
+      // and stop drawing on mouseup
+      image.on("mousedown touchstart", function () {
+        isPaint = true;
+        lastPointerPosition = stage.getPointerPosition();
+      });
+
+      // will it be better to listen move/end events on the window?
 
       stage.on("mouseup touchend", function () {
         isPaint = false;
       });
 
       // and core function - drawing
-      stage.on("mousemove touchmove", function (e) {
-        console.log(isPaint);
+      stage.on("mousemove touchmove", function () {
         if (!isPaint) {
           return;
         }
 
-        // prevent scrolling on touch devices
-        e.evt.preventDefault();
+        if (mode === "brush") {
+          context.globalCompositeOperation = "source-over";
+        }
+        if (mode === "eraser") {
+          context.globalCompositeOperation = "destination-out";
+        }
+        context.beginPath();
 
-        const pos = stage.getPointerPosition();
-        var newPoints = lastLine.points().concat([pos.x, pos.y]);
-        lastLine.points(newPoints);
+        let localPos = {
+          x: lastPointerPosition.x - image.x(),
+          y: lastPointerPosition.y - image.y(),
+        };
+        context.moveTo(localPos.x, localPos.y);
+        let pos = stage.getPointerPosition();
+        localPos = {
+          x: pos.x - image.x(),
+          y: pos.y - image.y(),
+        };
+        context.lineTo(localPos.x, localPos.y);
+        context.closePath();
+        context.stroke();
+
+        lastPointerPosition = pos;
+        // redraw manually
+        layer.batchDraw();
       });
 
-      var select = document.getElementById("tool");
-      select.addEventListener("change", function () {
-        mode = select.value;
-      });
+      // var select = document.getElementById("tool");
+      // select.addEventListener("change", function () {
+      //   mode = select.value;
+      // });
     </script>
   </body>
 </html>

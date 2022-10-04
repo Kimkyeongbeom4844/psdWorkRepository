@@ -18,6 +18,8 @@
   },
   "homepage": "https://github.com/Kimkyeongbeom4844/psdWorkRepository#readme",
   "dependencies": {
-    "@webtoon/psd": "^0.2.0"
+    "@webtoon/psd": "^0.2.0",
+    "compressorjs": "^1.1.1",
+    "js-image-compressor": "^2.0.0"
   }
 }

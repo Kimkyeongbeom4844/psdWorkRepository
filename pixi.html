@@ -85,12 +85,12 @@
         return false;
       };
       const init = async () => {
-        console.log();
         const app = new PIXI.Application({
           width: 500,
           height: 5000,
           resolution: devicePixelRatio,
         });
+        console.log(app.__proto__);
         document.querySelector(".pixiWrap").appendChild(app.view);
         const { stage } = app;
 
@@ -145,11 +145,15 @@
         // 브러시 색상 변경 기능 끝
 
         // app.loader.add("t1", "003_001_1.jpg");
-        const whatImage = PIXI.Texture.from("003_001_1.jpg");
+        // "http://192.168.1.2:8000/files/file/003_001_3_8CgsPlR.jpg"
+        const whatImage = PIXI.Texture.from(
+          "http://192.168.1.2:8000/files/file/003_001_3_8CgsPlR.jpg"
+        );
         // app.loader.add("t2", "날개 선화.jpg");
         // const texture = PIXI.Texture.from("날개 선화.jpg");
 
         const background = new PIXI.Sprite(whatImage);
+        console.log(background);
         stage.addChild(background);
         background.width = app.screen.width;
         background.height = app.screen.height;
@@ -241,6 +245,8 @@
             new PIXI.TextStyle({ fontSize: 14 })
           );
           const graphics = new PIXI.Graphics();
+          graphics.interactive = true;
+          graphics.buttonMode = true;
           basicText.x = Math.random() * 100;
           basicText.y = Math.random() * 100;
           let transX = basicText.x;
@@ -330,6 +336,25 @@
             graphics.drawPolygon(arr);
             app.stage.addChild(graphics);
             app.stage.addChild(basicText);
+
+            // app.ticker.add((delta) => {
+            //   graphics.rotation -= 10;
+            //   console.log(graphics);
+            // });
+            let rotate = false;
+            graphics.on("pointerdown", (e) => {
+              console.log(graphics);
+              rotate = true;
+            });
+            graphics.on("pointermove", (e) => {
+              // if (rotate) {
+              //   graphics.rotation += 10;
+              // }
+            });
+            graphics.on("pointerup", (e) => {
+              rotate = false;
+            });
+            console.log(stage);
             clearInterval(sticker);
           }, 50);
 
@@ -364,7 +389,7 @@
             dragOn = false;
           };
 
-          const removeBox = (e) => {
+          const showEditModal = (e) => {
             $("#staticBackdrop").modal("show");
             const chooseText = e.target;
             const chooseGraphics =
@@ -382,7 +407,7 @@
               transX = chooseText.x;
               transY = chooseText.y;
               const newVertex = await chooseText.calculateVertices();
-              console.log(app.stage.getChildIndex(chooseText));
+              // console.log(app.stage.getChildIndex(chooseText));
               const newGraphics = new PIXI.Graphics();
               const sticker = setInterval(() => {
                 let arr = [...chooseText.vertexData];
@@ -500,7 +525,7 @@
             .on("pointerup", onDragEnd)
             .on("pointerupoutside", onDragEnd)
             .on("pointermove", onDragMove)
-            .on("rightclick", removeBox);
+            .on("rightclick", showEditModal);
         };
         //말 풍선 끝
 
