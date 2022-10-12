@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <script src="https://unpkg.com/konva@8.3.12/konva.min.js"></script>
+    <script src="https://unpkg.com/konva@8.3.13/konva.min.js"></script>
     <meta charset="utf-8" />
-    <title>Konva Free Drawing Demo</title>
+    <title>Konva Multi-touch Scale Stage Demo</title>
     <style>
       body {
         margin: 0;
@@ -13,112 +13,127 @@
       }
     </style>
   </head>
-
   <body>
-    Tool:
-    <select id="tool">
-      <option value="brush">Brush</option>
-      <option value="eraser">Eraser</option>
-    </select>
     <div id="container"></div>
     <script>
-      var width = window.innerWidth;
-      var height = window.innerHeight - 25;
+      // by default Konva prevent some events when node is dragging
+      // it improve the performance and work well for 95% of cases
+      // we need to enable all events on Konva, even when we are dragging a node
+      // so it triggers touchmove correctly
+      Konva.hitOnDragEnabled = true;
 
-      // first we need Konva core things: stage and layer
+      var width = window.innerWidth;
+      var height = window.innerHeight;
+
       var stage = new Konva.Stage({
         container: "container",
         width: width,
         height: height,
+        draggable: false,
       });
 
       var layer = new Konva.Layer();
-      stage.add(layer);
 
-      // then we are going to draw into special canvas element
-      var canvas = document.createElement("canvas");
-      canvas.width = stage.width();
-      canvas.height = stage.height();
-
-      const isImg = new Image();
-      isImg.src = "http://192.168.1.2:8000/files/file/003_002.jpg";
-
-      loadImg = new Konva.Image({
-        image: isImg,
-        width: stage.width(),
-        height: stage.height(),
-      });
-      layer.add(loadImg);
-
-      // created canvas we can add to layer as "Konva.Image" element
-      var image = new Konva.Image({
-        image: canvas,
-        width: loadImg.width(),
-        height: loadImg.height(),
-      });
-      layer.add(image);
-
-      // Good. Now we need to get access to context element
-      var context = canvas.getContext("2d");
-      context.strokeStyle = "#df4b26";
-      context.lineJoin = "round";
-      context.lineWidth = 5;
-
-      var isPaint = false;
-      var lastPointerPosition;
-      var mode = "brush";
-
-      // now we need to bind some events
-      // we need to start drawing on mousedown
-      // and stop drawing on mouseup
-      image.on("mousedown touchstart", function () {
-        isPaint = true;
-        lastPointerPosition = stage.getPointerPosition();
+      var triangle = new Konva.RegularPolygon({
+        x: 190,
+        y: stage.height() / 2,
+        sides: 3,
+        radius: 80,
+        fill: "green",
+        stroke: "black",
+        strokeWidth: 4,
       });
 
-      // will it be better to listen move/end events on the window?
-
-      stage.on("mouseup touchend", function () {
-        isPaint = false;
+      var circle = new Konva.Circle({
+        x: 380,
+        y: stage.height() / 2,
+        radius: 70,
+        fill: "red",
+        stroke: "black",
+        strokeWidth: 4,
       });
 
-      // and core function - drawing
-      stage.on("mousemove touchmove", function () {
-        if (!isPaint) {
-          return;
-        }
+      // function getDistance(p1, p2) {
+      //   return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+      // }
 
-        if (mode === "brush") {
-          context.globalCompositeOperation = "source-over";
-        }
-        if (mode === "eraser") {
-          context.globalCompositeOperation = "destination-out";
-        }
-        context.beginPath();
+      // function getCenter(p1, p2) {
+      //   return {
+      //     x: (p1.x + p2.x) / 2,
+      //     y: (p1.y + p2.y) / 2,
+      //   };
+      // }
+      // var lastCenter = null;
+      // var lastDist = 0;
 
-        let localPos = {
-          x: lastPointerPosition.x - image.x(),
-          y: lastPointerPosition.y - image.y(),
-        };
-        context.moveTo(localPos.x, localPos.y);
-        let pos = stage.getPointerPosition();
-        localPos = {
-          x: pos.x - image.x(),
-          y: pos.y - image.y(),
-        };
-        context.lineTo(localPos.x, localPos.y);
-        context.closePath();
-        context.stroke();
+      // stage.on("touchmove", function (e) {
+      //   e.evt.preventDefault();
+      //   var touch1 = e.evt.touches[0];
+      //   var touch2 = e.evt.touches[1];
 
-        lastPointerPosition = pos;
-        // redraw manually
-        layer.batchDraw();
-      });
+      //   if (touch1 && touch2) {
+      //     // if the stage was under Konva's drag&drop
+      //     // we need to stop it, and implement our own pan logic with two pointers
+      //     if (stage.isDragging()) {
+      //       stage.stopDrag();
+      //     }
 
-      // var select = document.getElementById("tool");
-      // select.addEventListener("change", function () {
-      //   mode = select.value;
+      //     var p1 = {
+      //       x: touch1.clientX,
+      //       y: touch1.clientY,
+      //     };
+      //     var p2 = {
+      //       x: touch2.clientX,
+      //       y: touch2.clientY,
+      //     };
+
+      //     if (!lastCenter) {
+      //       lastCenter = getCenter(p1, p2);
+      //       return;
+      //     }
+      //     var newCenter = getCenter(p1, p2);
+
+      //     var dist = getDistance(p1, p2);
+
+      //     if (!lastDist) {
+      //       lastDist = dist;
+      //     }
+
+      //     // local coordinates of center point
+      //     var pointTo = {
+      //       x: (newCenter.x - stage.x()) / stage.scaleX(),
+      //       y: (newCenter.y - stage.y()) / stage.scaleX(),
+      //     };
+
+      //     var scale = stage.scaleX() * (dist / lastDist);
+
+      //     stage.scaleX(scale);
+      //     stage.scaleY(scale);
+
+      //     // calculate new position of the stage
+      //     var dx = newCenter.x - lastCenter.x;
+      //     var dy = newCenter.y - lastCenter.y;
+
+      //     var newPos = {
+      //       x: newCenter.x - pointTo.x * scale + dx,
+      //       y: newCenter.y - pointTo.y * scale + dy,
+      //     };
+
+      //     stage.position(newPos);
+
+      //     lastDist = dist;
+      //     lastCenter = newCenter;
+      //   }
       // });
+
+      // stage.on("touchend", function () {
+      //   lastDist = 0;
+      //   lastCenter = null;
+      // });
+
+      layer.add(triangle);
+      layer.add(circle);
+      stage.add(layer);
     </script>
   </body>
 </html>

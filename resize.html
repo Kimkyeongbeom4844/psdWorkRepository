@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>이미지용량축소</title>
+  </head>
+  <body>
+    <script>
+      let img = new Image();
+      img.onload = function () {
+        let thumbFile = getThumbFile(img); //여기서 이미지 객체 img를 활용하여 썸네일 처리를 할 수 있음
+      };
+      img.onerror = function () {
+        //에러가 나는 경우 처리를 할 수 있음
+      };
+      img.src = ".003_001_1.jpg"; //이미지 파일의 주소를 넣어주면 됨
+
+      function getThumbFile(_IMG) {
+        //canvas에 이미지 객체를 리사이징해서 담는 과정
+        var canvas = document.createElement("canvas");
+        canvas.width = "100px"; //리사이징하여 그릴 가로 길이
+        canvas.height = "100px"; //리사이징하여 그릴 세로 길이
+        canvas.getContext("2d").drawImage(_IMG, 0, 0, width, height);
+
+        //canvas의 dataurl를 blob(file)화 하는 과정
+        var dataURL = canvas.toDataURL("image/png"); //png => jpg 등으로 변환 가능
+        var byteString = atob(dataURI.split(",")[1]);
+        var mimeString = dataURI.split(",")[0].split(":")[1].split(";")[0];
+        var ab = new ArrayBuffer(byteString.length);
+        var ia = new Uint8Array(ab);
+        for (var i = 0; i < byteString.length; i++) {
+          ia[i] = byteString.charCodeAt(i);
+        }
+
+        //리사이징된 file 객체
+        var tmpThumbFile = new Blob([ab], { type: mimeString });
+
+        return tmpThumbFile;
+      }
+    </script>
+  </body>
+</html>
